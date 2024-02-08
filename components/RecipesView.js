@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {StyleSheet, View, Text, FlatList} from 'react-native';
+import {useDebouncedCallback} from 'use-debounce';
 import Constants from 'expo-constants';
 import {searchRecipes} from '../services/RecipeApi';
 import RecipeView from './RecipeView';
@@ -10,18 +11,21 @@ const RecipesView = () => {
 	const [searchWord, setSearchWord] = useState('');
 	const [selected, setSelected] = useState('i');
 
+	const fetchRecipes = async () => {
+		try {
+			//console.log('hakusana effectissä', searchWord);
+			const recipes = await searchRecipes(searchWord, selected);
+			//console.log(recipes);
+			return setRecipesList(recipes.meals);
+		} catch (error) {
+			return console.log(error.message);
+		}
+	};
+
+	const debouncedFetchRecipes = useDebouncedCallback(() => fetchRecipes(), 1000);
+
 	useEffect(() => {
-		const fetchRecipes = async () => {
-			try {
-				//console.log('hakusana effectissä', searchWord);
-				const recipes = await searchRecipes(searchWord, selected);
-				//console.log(recipes);
-				return setRecipesList(recipes.meals);
-			} catch (error) {
-				return console.log(error.message);
-			}
-		};
-		fetchRecipes();
+		debouncedFetchRecipes();
 	}, [searchWord, selected]);
 
 	return (
